@@ -417,5 +417,5 @@ def "main clean" [
 
 # mob - parallel coding task manager for jj repositories
 def main [] {
-    help main
+    help main | str replace --all "mob.nu" "mob" | str replace --all "> main" "> mob"
 }
