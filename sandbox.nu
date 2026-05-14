@@ -71,6 +71,26 @@ def sandbox-cmd [profile: string, workspace: string, cmd: list<string>]: nothing
     let overlay_args = overlay-home-args $workspace
     let sandbox_paths = sandbox-paths-args $workspace
 
+    # Auto-detect jj repo root and bind .jj + .git for workspace access
+    let jj_workspace_args = try {
+        let jj_root = (^jj workspace root --name default --ignore-working-copy | str trim)
+        let jj_dir = $"($jj_root)/.jj"
+        let git_dir = $"($jj_root)/.git"
+        let args = if ($jj_dir | path exists) {
+            ["--bind" $jj_dir $jj_dir]
+        } else {
+            []
+        }
+        let args = if ($git_dir | path exists) {
+            [...$args "--bind" $git_dir $git_dir]
+        } else {
+            $args
+        }
+        $args
+    } catch {
+        []
+    }
+
     let base_args = [
         # Minimal base (matches jailed-claude)
         "--proc" "/proc"
@@ -136,6 +156,9 @@ def sandbox-cmd [profile: string, workspace: string, cmd: list<string>]: nothing
 
         # Workspace-specific extra paths from .sandbox-paths
         ...$sandbox_paths
+
+        # jj repo store + git backend (auto-detected)
+        ...$jj_workspace_args
 
         # Unset sensitive env vars
         "--unsetenv" "ANTHROPIC_API_KEY"
