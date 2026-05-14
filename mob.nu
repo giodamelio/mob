@@ -225,6 +225,15 @@ def "main new" [
         }
     }
 
+    # Symlink tmp directory from root repo if it exists
+    let root_tmp = $"($ctx.root)/tmp"
+    if ($root_tmp | path exists) {
+        let workspace_tmp = $"($workspace)/tmp"
+        if not ($workspace_tmp | path exists) {
+            ^ln -s $root_tmp $workspace_tmp
+        }
+    }
+
     # Build session and command
     let session = session-name $ctx.name $task "claude-1"
     let claude = resolve-claude
@@ -412,6 +421,13 @@ def "main clean" [
     # Forget jj workspace
     print $"forgetting workspace: ($task)"
     ^jj workspace forget $task --ignore-working-copy
+
+    # Remove tmp symlink explicitly (unlinks only, does not delete the target)
+    let tmp_link = $"($workspace)/tmp"
+    if ($tmp_link | path exists) and (($tmp_link | path type) == "symlink") {
+        print $"unlinking symlink: ($tmp_link)"
+        rm $tmp_link
+    }
 
     # Remove directory
     print $"removing: ($workspace)"

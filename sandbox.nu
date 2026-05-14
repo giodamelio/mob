@@ -167,8 +167,24 @@ def sandbox-cmd [profile: string, workspace: string, cmd: list<string>]: nothing
         "--setenv" "PATH" ($env.PATH | str join ":")
     ]
 
+    # If workspace has a tmp symlink, bind its target RW so the symlink resolves inside the sandbox
+    let tmp_symlink_args = do {
+        let tmp_link = $"($workspace)/tmp"
+        if ($tmp_link | path exists) and (($tmp_link | path type) == "symlink") {
+            let target = (^readlink -f $tmp_link | str trim)
+            if ($target | path exists) {
+                ["--bind" $target $target]
+            } else {
+                []
+            }
+        } else {
+            []
+        }
+    }
+
     let profile_args = match $profile {
         "task" => [
+            ...$tmp_symlink_args
             "--bind" $workspace $workspace
             "--chdir" $workspace
         ],
