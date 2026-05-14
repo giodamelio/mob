@@ -317,7 +317,7 @@ def "main leader" [] {
     ^zmx attach $session ...$cmd
 }
 
-# List tasks and sessions
+# List tasks and sessions (alias: list)
 def "main ls" [] {
     let ctx = find-project-root
     let tasks_dir = $"($ctx.root)/.mob/tasks"
@@ -373,6 +373,11 @@ def "main ls" [] {
     }
 
     [...$rows ...$leader_rows] | table
+}
+
+# List tasks and sessions (alias for ls)
+def "main list" [] {
+    main ls
 }
 
 # Tear down a task
